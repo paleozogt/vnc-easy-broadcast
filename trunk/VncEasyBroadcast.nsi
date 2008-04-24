@@ -9,9 +9,11 @@
 !define VNCBRAND         "TightVNC"
 !define VNCVIEWER        "$INSTDIR\vncviewer.exe"
 !define VNCSERVER        "$INSTDIR\WinVNC.exe"
-!define BROADCAST        "broadcast.bat"
 !define VNCVIEWER_OPTS \
      "-listen -viewonly -fullscreen -notoolbar -shared -restricted -fitwindow"
+
+!define BROADCAST        "broadcast.bat"
+!define BROADCAST_SHORTCUT "$SMPROGRAMS\TightVNC\Administration\Broadcast.lnk"
 
 !define ADDREMOVEPROGS "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODNAME}"
 
@@ -109,7 +111,7 @@ section "setupVncViewerService"
       File "${SVC_WRAPPER_NAME}.exe"
 
    File "${BROADCAST}"
-   CreateShortcut "$SMPROGRAMS\TightVNC\Administration\Broadcast.lnk" $INSTDIR\${BROADCAST}
+   CreateShortcut ${BROADCAST_SHORTCUT} $INSTDIR\${BROADCAST}
 
    # set up the service wrapper ini
    #
@@ -128,9 +130,12 @@ sectionEnd
 
 # Uninstallation
 #
-section "uninstall"
+section "uninstall"   
+   SetShellVarContext all
+
    !insertmacro regService remove
-   Delete ${BROADCAST}
+   Delete $INSTDIR\${BROADCAST}
+   Delete ${BROADCAST_SHORTCUT}
    Delete ${SVC_WRAPPER_FILE}
    Delete ${SVC_INI}
    Delete ${UNINSTALLER}
