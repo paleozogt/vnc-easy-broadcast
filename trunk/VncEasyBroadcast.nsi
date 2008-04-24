@@ -8,6 +8,7 @@
 
 !define VNCBRAND         "TightVNC"
 !define VNCVIEWER        "$INSTDIR\vncviewer.exe"
+!define VNCSERVER        "$INSTDIR\WinVNC.exe"
 !define VNCVIEWER_OPTS \
      "-listen -viewonly -fullscreen -notoolbar -shared -restricted -fitwindow"
 
@@ -16,6 +17,8 @@
 !define MSG_INSTALL  "This will install ${PRODNAME}"
 !define ERRMSG_NOVNC "Cannot find ${VNCBRAND}.  You must have ${VNCBRAND} installed."
 !define ERRMSG_NOTADMIN "You are a member of $0.  You must have administrator rights to install this program."
+
+!define FIREWALL "netsh firewall add allowedprogram "
 
 !macro regService action
    nsExec::Exec '"${SVC_WRAPPER_FILE}" ${action} "${SVC_NAME}"'
@@ -64,15 +67,24 @@ sectionEnd
 
 section "setupVncServer"
 
-   # disable shutdown and property editing for server
+   # disable shutdown for vnc server
 
    WriteRegDWORD HKLM \
       "SOFTWARE\ORL\WinVNC3\Default" \
       "AllowShutdown" 0x0
 
-   WriteRegDWORD HKLM \
+   # disable property editing for server
+
+   #WriteRegDWORD HKLM \
       "SOFTWARE\ORL\WinVNC3\Default" \
       "AllowProperties" 0x0
+sectionEnd
+
+section "firewall"
+   # poke a hole in xp's firewall
+
+   nsExec::Exec '${FIREWALL} "${VNCVIEWER}" VncViewer ENABLE'
+   nsExec::Exec '${FIREWALL} "${VNCSERVER}" VncServer ENABLE'
 sectionEnd
 
 section "setupVncViewerService"
