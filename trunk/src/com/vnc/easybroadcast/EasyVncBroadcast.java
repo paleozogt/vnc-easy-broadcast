@@ -1,36 +1,66 @@
 package com.vnc.easybroadcast;
 
 import java.awt.BorderLayout;
-import java.awt.Button;
 import java.awt.Color;
-import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.Frame;
+import java.awt.FileDialog;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Insets;
-import java.awt.List;
-import java.awt.Panel;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
 import java.util.ListIterator;
+import java.util.Vector;
 import java.awt.event.WindowAdapter;
+import java.io.File;
 
-public class EasyVncBroadcast  extends Frame
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.ScrollPaneConstants;
+import javax.swing.UIManager;
+
+import org.apache.commons.collections.iterators.ArrayIterator;
+
+import com.vnc.*;
+
+public class EasyVncBroadcast  extends JFrame
 {
-
 	private static String WIN_TITLE= "Easy Vnc Broadcast";
 	private static String BTN_LOAD= "Load List";
 	private static String BTN_SAVE= "Save List";
+
+	private static String BTN_ADD= "Add Client";
+	private static String BTN_DEL= "Delete Client";
+
 	private static String BTN_BROADCAST= "Broadcast";
 	private static String BTN_DISCONNECT= "Disconnect";
 
-	public static void main(String[] args) {
-		EasyVncBroadcast window= new EasyVncBroadcast();
+	VncViewersList clients= new VncViewersList();
+	JList clientList= new JList(clients);
 	
+	public static void main(String[] args) {
+		try {
+			System.out.println("class path= " + 
+					System.getProperties().getProperty("java.class.path"));
+			
+			
+			
+			UIManager.setLookAndFeel(
+		            UIManager.getSystemLookAndFeelClassName());
+			EasyVncBroadcast window= new EasyVncBroadcast();
+		} catch (Exception e) {		
+		}
+
 	}
 
 	public EasyVncBroadcast() {
@@ -44,36 +74,39 @@ public class EasyVncBroadcast  extends Frame
 		});
 		
 		GridLayout layout= new GridLayout(1, 2, 1, 1);
-		Panel panel= new Panel(layout);
-		panel.setBackground(Color.LIGHT_GRAY);
+		JPanel panel= new JPanel(layout);
 		add(panel);
-	    panel.setPreferredSize(new Dimension(250, 250));
+	    panel.setPreferredSize(new Dimension(380, 180));
 
-	    List vnclist= new List(15);
-	    vnclist.setSize(
-	    		new Dimension(vnclist.getWidth(), vnclist.getHeight()*2));
-	    
+	    clientList.setFixedCellWidth(150);
+	    clientList.setVisibleRowCount(10);
 
-
-	    Panel listPanel= new Panel();
-	    listPanel.add(vnclist);
-	    
+	    JPanel listPanel= new JPanel();
+	    listPanel.add(new JScrollPane(clientList, 
+	    		ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, 
+	    		ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER));	    
 	    panel.add(listPanel);
-	    
-	    Panel btnPanel= new Panel();
-	    
 
-	    addButton(btnPanel, BTN_BROADCAST, new ActionListener(){
+	    panel.add(makeButtonPanel());
+	    
+		setTitle(WIN_TITLE);
+		setLocationRelativeTo(null);
+		setVisible(true);
+		pack();
+	}
+
+	private JPanel makeButtonPanel() {
+	    JPanel btnPanel= new JPanel();
+	    
+	    addButton(btnPanel, BTN_ADD, new ActionListener(){
 			public void actionPerformed(ActionEvent arg0) {
-				broadcast();
 			}
 	    });
-	    addButton(btnPanel, BTN_DISCONNECT, new ActionListener(){
+	    addButton(btnPanel, BTN_DEL, new ActionListener(){
 			public void actionPerformed(ActionEvent arg0) {
-				disconnect();
 			}
-	    });
-    
+	    });	    
+	    	    
 	    addButton(btnPanel, BTN_LOAD, new ActionListener(){
 			public void actionPerformed(ActionEvent arg0) {
 				loadVncClients();
@@ -85,15 +118,22 @@ public class EasyVncBroadcast  extends Frame
 			}
 	    });
 	    
-	    panel.add(btnPanel);
+	    addButton(btnPanel, BTN_BROADCAST, new ActionListener(){
+			public void actionPerformed(ActionEvent arg0) {
+				broadcast();
+			}
+	    });
+	    addButton(btnPanel, BTN_DISCONNECT, new ActionListener(){
+			public void actionPerformed(ActionEvent arg0) {
+				disconnect();
+			}
+	    });	    
 	    
-		setTitle(WIN_TITLE);
-		setVisible(true);
-		pack();
+	    return btnPanel;
 	}
-
-	private static Button addButton(Panel panel, String label, ActionListener action) {
-		Button btn= new Button(label);
+	
+	private static JButton addButton(JPanel panel, String label, ActionListener action) {
+		JButton btn= new JButton(label);
 		btn.addActionListener(action);
 		panel.add(btn);
 		return btn;
@@ -105,7 +145,11 @@ public class EasyVncBroadcast  extends Frame
 	}
 	
 	void broadcast() {
-		
+		Iterator<Integer> it= new ArrayIterator(clientList.getSelectedIndices());
+		while (it.hasNext()) {
+			VncViewerInfo clientinfo= clients.get(it.next());
+			VncBroadcaster.broadcast(clientinfo.getHost());
+		}
 	}
 	
 	void disconnect() {
@@ -113,10 +157,25 @@ public class EasyVncBroadcast  extends Frame
 	}
 	
 	void loadVncClients() {
-		
+		FileDialog dlg= new FileDialog(this, BTN_LOAD, FileDialog.LOAD);
+		dlg.setVisible(true);
+		if (dlg.getFile() == null) return;
+
+		// TODO: prompt for encryption password
+		File file= new File(dlg.getDirectory(), dlg.getFile());
+		System.out.println("loading " + file);
+		clients.loadHosts(file, "");
+		clientList.updateUI();
 	}
 	
 	void saveVncClients() {
+		FileDialog dlg= new FileDialog(this, BTN_SAVE, FileDialog.SAVE);
+		dlg.setVisible(true);
+		if (dlg.getFile() == null) return;
 		
+		// TODO: prompt for encryption password
+		File file= new File(dlg.getDirectory(), dlg.getFile());
+		System.out.println("loading " + file);
+		clients.saveToFile(file);
 	}
 }

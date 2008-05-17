@@ -45,4 +45,8 @@ public class VncViewerInfo {
 	public void setUserdomain(String userdomain) {
 		this.userdomain = userdomain;
 	}
+	
+	public String toString() {
+		return getHost();
+	}
 }
