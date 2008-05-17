@@ -26,7 +26,7 @@ import java.net.*;
 
 import acme.crypto.DesCipher;
 
-class VncViewersList extends Vector<VncViewerInfo> {
+public class VncViewersList extends Vector<VncViewerInfo> {
 
 	final static float VERSION = 1.4f;
 
@@ -62,10 +62,10 @@ class VncViewersList extends Vector<VncViewerInfo> {
 		// this returns false even if there is a problem reading the file	}
 
 
-	public void loadHosts(String filename, String encPassword) {
+	public void loadHosts(File file, String encPassword) {
 		try {
-			File file = new File(filename);			URL url = file.toURL();
-			filename = url.getPath();
+			URL url = file.toURL();
+			String filename = url.getPath();
 
 			IXMLParser parser = XMLParserFactory.createDefaultXMLParser();
 			IXMLReader reader = StdXMLReader.fileReader(filename);
@@ -178,20 +178,20 @@ class VncViewersList extends Vector<VncViewerInfo> {
 	}
 
 
-	public void saveToEncryptedFile(String filename, String encPassword) {
+	public void saveToEncryptedFile(File file, String encPassword) {
 		if(encPassword == null || encPassword.length() == 0) {
 			System.out.println("WARNING: Saving to encrypted file with empty passkey");
 		}
-		saveHosts(true, filename, encPassword);
+		saveHosts(true, file, encPassword);
 	}
 
 
-	public void saveToFile(String filename) {
-		saveHosts(false, filename, null);
+	public void saveToFile(File file) {
+		saveHosts(false, file, null);
 	}
 
 
-	private void saveHosts(boolean isEncrypted, String filename, String encPassword) {
+	private void saveHosts(boolean isEncrypted, File file, String encPassword) {
 
 		IXMLElement manifest = new XMLElement("Manifest");
 		manifest.setAttribute("Encrypted", (isEncrypted? "1" : "0") );
@@ -243,7 +243,7 @@ class VncViewersList extends Vector<VncViewerInfo> {
 		}
 
 		try {
-			PrintWriter o = new PrintWriter( new FileOutputStream(filename) );
+			PrintWriter o = new PrintWriter( new FileOutputStream(file) );
 			XMLWriter writer = new XMLWriter(o);
 			o.println("<?xml version=\"1.0\" standalone=\"yes\"?>");			writer.write(manifest, true);
 
