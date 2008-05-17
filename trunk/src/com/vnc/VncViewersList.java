@@ -1,4 +1,4 @@
-package com.vnc.easybroadcast;
+package com.vnc;
 
 //Copyright (C) 2007-2008 David Czechowski  All Rights Reserved.
 
@@ -23,6 +23,8 @@ import java.io.*;
 import net.n3.nanoxml.*; // Source available at http://nanoxml.cyberelf.be/
 import java.util.*;
 import java.net.*;
+
+import acme.crypto.DesCipher;
 
 class VncViewersList extends Vector<VncViewerInfo> {
 
