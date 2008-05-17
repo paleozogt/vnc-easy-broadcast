@@ -1,4 +1,4 @@
-package com.vnc.easybroadcast;
+package com.vnc;
 
 public class VncViewerInfo {
 	protected String host;
