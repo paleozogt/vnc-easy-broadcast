@@ -30,9 +30,12 @@ public class VncViewersList extends Vector<VncViewerInfo> {
 
 	final static float VERSION = 1.4f;
 
-	public VncViewersList()
-	{
+	public VncViewersList() {
 		super();
+	}
+	
+	public VncViewersList(File file, String password) {
+		loadHosts(file, password);
 	}
 
 	public static boolean isHostsFileEncrypted(String filename) {

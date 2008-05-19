@@ -2,10 +2,14 @@ package com.vnc;
 
 public class VncViewerInfo {
 	protected String host;
-	protected int port;
+	protected int port= 5900;
 	protected String password;
 	protected String user;
 	protected String userdomain;
+	
+	public VncViewerInfo(String host) {
+		setHost(host);
+	}
 	
 	public VncViewerInfo(String host, int port, String password, String user, String userdomain) {
 		setHost(host);

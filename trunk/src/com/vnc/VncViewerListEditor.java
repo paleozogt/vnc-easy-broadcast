@@ -1,40 +1,32 @@
-package com.vnc.easybroadcast;
+package com.vnc;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FileDialog;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
 import java.awt.GridLayout;
-import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.io.File;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.ListIterator;
-import java.util.Vector;
-import java.awt.event.WindowAdapter;
-import java.io.File;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JList;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.ScrollPaneConstants;
-import javax.swing.UIManager;
+import javax.swing.SwingUtilities;
 
+import org.apache.commons.collections.IteratorUtils;
 import org.apache.commons.collections.iterators.ArrayIterator;
 
-import com.vnc.*;
+import com.vnc.easybroadcast.VncBroadcaster;
 
-public class EasyVncBroadcast  extends JFrame
-{
+public class VncViewerListEditor extends JPanel {
 	private static String WIN_TITLE= "Easy Vnc Broadcast";
 	private static String BTN_LOAD= "Load List";
 	private static String BTN_SAVE= "Save List";
@@ -42,37 +34,15 @@ public class EasyVncBroadcast  extends JFrame
 	private static String BTN_ADD= "Add Client";
 	private static String BTN_DEL= "Delete Client";
 
-	private static String BTN_BROADCAST= "Broadcast";
-	private static String BTN_DISCONNECT= "Disconnect";
-
-	VncViewersList clients= new VncViewersList();
-	JList clientList= new JList(clients);
+	private static String PROMPT_ADDCLIENT= "Enter the client hostname";
 	
-	public static void main(String[] args) {
-		try {
-			System.out.println("class path= " + 
-					System.getProperties().getProperty("java.class.path"));
-			
-			
-			
-			UIManager.setLookAndFeel(
-		            UIManager.getSystemLookAndFeelClassName());
-			EasyVncBroadcast window= new EasyVncBroadcast();
-		} catch (Exception e) {		
-		}
-
-	}
-
-	public EasyVncBroadcast() {
-		addWindowListener(new WindowAdapter() {
-			public void windowClosing(WindowEvent e) {
-				super.windowClosing(e);		
-				if(e.getComponent() == EasyVncBroadcast.this) {
-					quit();
-				}
-			}
-		});
-		
+	VncViewersList clients= new VncViewersList();
+	JList clientList= new JList(clients);	
+	
+	JFrame parent;
+	
+	public VncViewerListEditor(JFrame parent) {	
+		this.parent= parent;
 		GridLayout layout= new GridLayout(1, 2, 1, 1);
 		JPanel panel= new JPanel(layout);
 		add(panel);
@@ -88,11 +58,6 @@ public class EasyVncBroadcast  extends JFrame
 	    panel.add(listPanel);
 
 	    panel.add(makeButtonPanel());
-	    
-		setTitle(WIN_TITLE);
-		setLocationRelativeTo(null);
-		setVisible(true);
-		pack();
 	}
 
 	private JPanel makeButtonPanel() {
@@ -100,10 +65,12 @@ public class EasyVncBroadcast  extends JFrame
 	    
 	    addButton(btnPanel, BTN_ADD, new ActionListener(){
 			public void actionPerformed(ActionEvent arg0) {
+				addClient();
 			}
 	    });
 	    addButton(btnPanel, BTN_DEL, new ActionListener(){
 			public void actionPerformed(ActionEvent arg0) {
+				delClient();
 			}
 	    });	    
 	    	    
@@ -118,17 +85,6 @@ public class EasyVncBroadcast  extends JFrame
 			}
 	    });
 	    
-	    addButton(btnPanel, BTN_BROADCAST, new ActionListener(){
-			public void actionPerformed(ActionEvent arg0) {
-				broadcast();
-			}
-	    });
-	    addButton(btnPanel, BTN_DISCONNECT, new ActionListener(){
-			public void actionPerformed(ActionEvent arg0) {
-				disconnect();
-			}
-	    });	    
-	    
 	    return btnPanel;
 	}
 	
@@ -139,41 +95,48 @@ public class EasyVncBroadcast  extends JFrame
 		return btn;
 	}
 	
-	private void quit() {
-		this.dispose();
-		System.exit(0);
+	void addClient() {		
+		 String inputValue = JOptionPane.showInputDialog(PROMPT_ADDCLIENT);
+		 if (inputValue == null) return;
+		 clients.add(new VncViewerInfo(inputValue));
+		 clientList.updateUI();
 	}
 	
-	void broadcast() {
-		Iterator<Integer> it= new ArrayIterator(clientList.getSelectedIndices());
-		while (it.hasNext()) {
-			VncViewerInfo clientinfo= clients.get(it.next());
-			VncBroadcaster.broadcast(clientinfo.getHost());
-		}
-	}
-	
-	void disconnect() {
+	void delClient() {
+		// get the selected indices, but
+		// make sure to reverse-sort it
+		// so that we can delete them all
+		// from the list at once without worrying
+		// about adjusting each index
+		List<Integer> selected= 
+			IteratorUtils.toList(new ArrayIterator(clientList.getSelectedIndices()));
+		Collections.reverse(selected);
+		Iterator<Integer> it= selected.iterator();
 		
+		while (it.hasNext()) {
+			int idx= it.next();
+			clients.remove(idx);			
+		}
+		clientList.updateUI();
+		clientList.clearSelection();
 	}
 	
 	void loadVncClients() {
-		FileDialog dlg= new FileDialog(this, BTN_LOAD, FileDialog.LOAD);
+		FileDialog dlg= new FileDialog(parent, BTN_LOAD, FileDialog.LOAD);
 		dlg.setVisible(true);
 		if (dlg.getFile() == null) return;
 
-		// TODO: prompt for encryption password
 		File file= new File(dlg.getDirectory(), dlg.getFile());
 		System.out.println("loading " + file);
-		clients.loadHosts(file, "");
+		clients.loadHosts(file, null);
 		clientList.updateUI();
 	}
 	
 	void saveVncClients() {
-		FileDialog dlg= new FileDialog(this, BTN_SAVE, FileDialog.SAVE);
+		FileDialog dlg= new FileDialog(parent, BTN_SAVE, FileDialog.SAVE);
 		dlg.setVisible(true);
 		if (dlg.getFile() == null) return;
 		
-		// TODO: prompt for encryption password
 		File file= new File(dlg.getDirectory(), dlg.getFile());
 		System.out.println("loading " + file);
 		clients.saveToFile(file);
