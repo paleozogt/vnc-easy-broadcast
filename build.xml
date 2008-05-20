@@ -1,43 +1,66 @@
 <project name="VncEasyBroadcast" default="dist" basedir=".">
-    <description>
-        VncEasyBroadcast
-    </description>
-  <!-- set global properties for this build -->
-  <property name="src" location="src"/>
-  <property name="build" location="build"/>
-  <property name="dist"  location="dist"/>
+   <description>
+      VncEasyBroadcast
+   </description>
+   <!-- set global properties for this build -->
+   <property name="src"   location="src"/>
+   <property name="build" location="build"/>
+   <property name="dist"  location="dist"/>
+   <property name="lib"   location="lib"/>
+   <property name="build-lib"   location="build-lib"/>
+   
+   <!-- launch4j stuff -->
+   <property name="launch4j.dir" location="${build-lib}/launch4j" />
+   <taskdef name="launch4j"
+            classname="net.sf.launch4j.ant.Launch4jTask"
+            classpath="${launch4j.dir}/launch4j.jar:${launch4j.dir}/lib/xstream.jar" />
+   
+   
+   <target name="init">
+      <!-- Create the time stamp -->
+      <tstamp/>
+      <!-- Create the build directory structure used by compile -->
+      <mkdir dir="${build}"/>
+   </target>
 
-  <target name="init">
-    <!-- Create the time stamp -->
-    <tstamp/>
-    <!-- Create the build directory structure used by compile -->
-    <mkdir dir="${build}"/>
-  </target>
+   <target name="preplibs" depends="init">
+      <!-- dump contents of all lib jars into build -->
+      <unjar dest="${build}">
+         <fileset dir="${lib}">
+            <include name="**/*.jar"/>
+         </fileset>
+      </unjar>
+      
+      <!-- dump all lib class files into build -->
+      <copy todir="${build}">
+         <fileset dir="${lib}">
+            <include name="**/*.class"/>
+         </fileset>
+      </copy>
+   </target>
+   
+   <target name="compile" depends="preplibs" description="compile the source " >
+      <!-- Compile the java code from ${src} into ${build} -->
+      <javac srcdir="${src}" destdir="${build}">
+         <classpath>
+            <pathelement location="lib"/>
+         </classpath>
+      </javac>
+   </target>
 
-  <target name="compile" depends="init" description="compile the source " >
-    <!-- Compile the java code from ${src} into ${build} -->
-    <javac srcdir="${src}" destdir="${build}">
-    <classpath>
-	  <pathelement location="lib"/>
-      <fileset dir="lib">
-        <include name="**/*.jar"/>
-      </fileset>
-	  </classpath>
-	</javac>
-  </target>
+   <target name="dist" depends="compile" description="generate the distribution" >
+      <!-- Create the distribution directory -->
+      <mkdir dir="${dist}"/>
 
-  <target name="dist" depends="compile" description="generate the distribution" >
-    <!-- Create the distribution directory -->
-    <mkdir dir="${dist}"/>
+      <!-- Put everything in ${build} into the jar file -->
+      <jar jarfile="${dist}/VncEasyBroadcast.jar" basedir="${build}" manifest="manifest.mf"/>
+      
+      <launch4j configFile="./lancher-config.xml"/>
+   </target>
 
-    <!-- Put everything in ${build} into the MyProject-${DSTAMP}.jar file -->
-    <jar jarfile="${dist}/VncEasyBroadcast-${DSTAMP}.jar" basedir="${build}"/>
-  </target>
-
-  <target name="clean"
-        description="clean up" >
-    <!-- Delete the ${build} and ${dist} directory trees -->
-    <delete dir="${build}"/>
-    <delete dir="${dist}"/>
-  </target>
+   <target name="clean" description="clean up" >
+      <!-- Delete the ${build} and ${dist} directory trees -->
+      <delete dir="${build}"/>
+      <delete dir="${dist}"/>
+   </target>
 </project>
