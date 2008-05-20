@@ -1,3 +1,3 @@
 Manifest-Version: 1.0
 Main-Class: com.vnc.easybroadcast.VncEasyBroadcast
-Class-Path: lib/commons-collections-3.2.1.jar lib/commons-cli-1.1.jar
+
