@@ -4,14 +4,13 @@
 !include VncDetect.nsh
 
 !define PRODNAME         "VncEasyBroadcast"
-!define PRODNAME_LONG    "Vnc Easy Broadcast"
 outFile "..\dist\${PRODNAME}Installer.exe"
 
 !define VERSION          "1.2.0.0"
 VIProductVersion         "${VERSION}"
 VIAddVersionKey "ProductName" "${PRODNAME}"
 VIAddVersionKey "FileVersion" "${VERSION}"
-VIAddVersionKey "FileDescription" "${PRODNAME_LONG}"
+VIAddVersionKey "FileDescription" "${PRODNAME} Installer"
 VIAddVersionKey "LegalCopyright"   "GPLv3"
 
 !define UNINSTALLER      "$INSTDIR\vncbunst.exe"

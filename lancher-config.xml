@@ -1,8 +1,8 @@
 <launch4jConfig>
   <dontWrapJar>false</dontWrapJar>
   <headerType>gui</headerType>
-  <jar>dist/vnceasybroadcast.jar</jar>
-  <outfile>dist/VncEasyBroadcast.exe</outfile>
+  <jar>dist\vnceasybroadcast.jar</jar>
+  <outfile>dist\VncEasyBroadcast.exe</outfile>
   <errTitle></errTitle>
   <cmdLine></cmdLine>
   <chdir></chdir>
@@ -19,4 +19,16 @@
     <maxVersion></maxVersion>
     <jdkPreference>preferJre</jdkPreference>
   </jre>
+  <versionInfo>
+    <fileVersion>1.2.0.0</fileVersion>
+    <txtFileVersion>1.2</txtFileVersion>
+    <fileDescription>VncEasyBroadcast</fileDescription>
+    <copyright>GPLv3</copyright>
+    <productVersion>1.2.0.0</productVersion>
+    <txtProductVersion>1.2</txtProductVersion>
+    <productName>VncEasyBroadcast</productName>
+    <companyName></companyName>
+    <internalName>VncEasyBroadcast</internalName>
+    <originalFilename>VncEasyBroadcast.exe</originalFilename>
+  </versionInfo>
 </launch4jConfig>
