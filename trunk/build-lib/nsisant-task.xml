@@ -1,0 +1,5 @@
+ <project name="nsisant-task">
+   <taskdef name="nsis" classname="net.sf.nsisant.Task">
+       <classpath location="${build-lib}/nsisant-1.2.jar"/>
+   </taskdef>
+ </project>

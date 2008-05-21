@@ -2,28 +2,18 @@
    <description>
       VncEasyBroadcast
    </description>
+      
    <!-- set global properties for this build -->
+   <property file="build.properties"/>
    <property name="src"   location="src"/>
    <property name="build" location="build"/>
    <property name="dist"  location="dist"/>
    <property name="lib"   location="lib"/>
    <property name="build-lib"   location="build-lib"/>
    <property name="install-src" location="install-src"/>
-
-   
-   
-   <property name="launch4j.dir" location="${build-lib}/launch4j" />
-   <property name="nsis.dir" location="${build-lib}" />
-   
-   <!-- launch4j stuff -->
-   <taskdef name="launch4j"
-            classname="net.sf.launch4j.ant.Launch4jTask"
-            classpath="${launch4j.dir}/launch4j.jar:${launch4j.dir}/lib/xstream.jar" />
-   
-   <!-- nsis stuff -->
-   <taskdef name="nsis" classname="net.sf.nsisant.Task">
-       <classpath location="${nsis.dir}/nsisant-1.2.jar"/>
-   </taskdef>
+  
+   <import file="${build-lib}/launch4j-task.xml"/>
+   <import file="${build-lib}/nsisant-task.xml"/>
    
    <target name="init">
       <!-- Create the time stamp -->
@@ -68,7 +58,7 @@
       <launch4j configFile="./lancher-config.xml"/>
 	  
 	  <!-- build the installer -->
-	  <!-- <nsis script="${install-src}\VncEasyBroadcast.nsi"/> -->
+	  <nsis script="${install-src}\VncEasyBroadcast.nsi" verbosity="2" path="${nsis.dir}"/>
    </target>
 
    <target name="clean" description="clean up" >
