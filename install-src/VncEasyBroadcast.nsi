@@ -4,8 +4,17 @@
 !include VncDetect.nsh
 
 !define PRODNAME         "VncEasyBroadcast"
-!define UNINSTALLER      "$INSTDIR\vncbunst.exe"
+!define PRODNAME_LONG    "Vnc Easy Broadcast"
 outFile "..\dist\${PRODNAME}Installer.exe"
+
+!define VERSION          "1.2.0.0"
+VIProductVersion         "${VERSION}"
+VIAddVersionKey "ProductName" "${PRODNAME}"
+VIAddVersionKey "FileVersion" "${VERSION}"
+VIAddVersionKey "FileDescription" "${PRODNAME_LONG}"
+VIAddVersionKey "LegalCopyright"   "GPLv3"
+
+!define UNINSTALLER      "$INSTDIR\vncbunst.exe"
 
 !define SVC_WRAPPER_NAME "ServiceEx"
 !define SVC_WRAPPER_FILE "$INSTDIR\${SVC_WRAPPER_NAME}.exe"
