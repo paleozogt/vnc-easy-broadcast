@@ -15,7 +15,9 @@ outFile "..\dist\${PRODNAME}Installer.exe"
 !define VNCVIEWER        "$INSTDIR\vncviewer.exe"
 !define VNCSERVER        "$INSTDIR\WinVNC.exe"
 !define VNCVIEWER_OPTS \
-     "-listen -viewonly -fullscreen -notoolbar -shared -restricted -fitwindow"
+     "-listen -fullscreen -shared -viewonly -notoolbar -restricted"
+!define VNCVIEWER_OPTS_TIGHTVNC "${VNCVIEWER_OPTS} -fitwindow"
+!define VNCVIEWER_OPTS_ULTRAVNC "${VNCVIEWER_OPTS} -autoscaling"
 
 !define BROADCAST_SHORTCUT "$SMPROGRAMS\$VncType\${PRODNAME}.lnk"
 	 
@@ -28,6 +30,7 @@ outFile "..\dist\${PRODNAME}Installer.exe"
 !define FIREWALL "netsh firewall add allowedprogram "
 
 Var VncType
+Var VncViewerOptions
 
 !macro regService action
    nsExec::Exec '"${SVC_WRAPPER_FILE}" ${action} "${SVC_NAME}"'
@@ -58,11 +61,21 @@ section "vncDetect"
    # check whether vnc is even installed...
    #
    !insertmacro detectVnc $VncType $INSTDIR
+messageBox MB_OK|MB_ICONEXCLAMATION "vnctype= $VncType location=$INSTDIR"
    IfFileExists $INSTDIR HasFile 0
       messageBox MB_OK|MB_ICONEXCLAMATION "${ERRMSG_NOVNC}"
       Quit
    HasFile:
+
+   # set up vnc viewer options for whatever flavor we're using   
+   StrCmp $VncType "${TIGHTVNC_NAME}" 0 IsOtherVnc
+   StrCpy $VncViewerOptions "${VNCVIEWER_OPTS_TIGHTVNC}"
+   Goto Done
+IsOtherVnc:
+   StrCpy $VncViewerOptions "${VNCVIEWER_OPTS_ULTRAVNC}"
+   Goto Done
    
+Done:   
    WriteRegStr HKLM "SOFTWARE\ORL\WinVNC3" "VncFlavor" "$VncType"   
 sectionEnd
 
@@ -105,7 +118,7 @@ section "setupVncViewerService"
    # set up the service wrapper ini
    #
    WriteINIStr "${SVC_INI}" "${SVC_WRAPPER_NAME}" "ServiceExeFullPath" "${VNCVIEWER}"
-   WriteINIStr "${SVC_INI}" "${SVC_WRAPPER_NAME}" "options" "${VNCVIEWER_OPTS}"
+   WriteINIStr "${SVC_INI}" "${SVC_WRAPPER_NAME}" "options" "$VncViewerOptions"
    WriteINIStr "${SVC_INI}" "${SVC_WRAPPER_NAME}" "desktop" "true"
    WriteINIStr "${SVC_INI}" "${SVC_WRAPPER_NAME}" "StartNow" "true"
 sectionEnd
