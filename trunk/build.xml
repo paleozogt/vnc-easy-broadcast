@@ -8,13 +8,22 @@
    <property name="dist"  location="dist"/>
    <property name="lib"   location="lib"/>
    <property name="build-lib"   location="build-lib"/>
+   <property name="install-src" location="install"/>
+
+   
+   
+   <property name="launch4j.dir" location="${build-lib}/launch4j" />
+   <property name="nsis.dir" location="${build-lib}" />
    
    <!-- launch4j stuff -->
-   <property name="launch4j.dir" location="${build-lib}/launch4j" />
    <taskdef name="launch4j"
             classname="net.sf.launch4j.ant.Launch4jTask"
             classpath="${launch4j.dir}/launch4j.jar:${launch4j.dir}/lib/xstream.jar" />
    
+   <!-- nsis stuff -->
+   <taskdef name="nsis" classname="net.sf.nsisant.Task">
+       <classpath location="${nsis.dir}/nsisant-1.2.jar"/>
+   </taskdef>
    
    <target name="init">
       <!-- Create the time stamp -->
@@ -51,11 +60,15 @@
    <target name="dist" depends="compile" description="generate the distribution" >
       <!-- Create the distribution directory -->
       <mkdir dir="${dist}"/>
-
+	  
       <!-- Put everything in ${build} into the jar file -->
       <jar jarfile="${dist}/VncEasyBroadcast.jar" basedir="${build}" manifest="manifest.mf"/>
       
+	  <!-- build windows exe-->
       <launch4j configFile="./lancher-config.xml"/>
+	  
+	  <!-- build the installer -->
+	  <!-- <nsis script="${install-src}\VncEasyBroadcast.nsi"/> -->
    </target>
 
    <target name="clean" description="clean up" >

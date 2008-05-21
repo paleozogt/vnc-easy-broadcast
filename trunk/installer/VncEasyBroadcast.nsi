@@ -1,37 +1,39 @@
+!ifndef ADDREMOVEPROGS
+	!include AddRemProgs.nsh
+!endif
+!include VncDetect.nsh
+
 !define PRODNAME         "VncEasyBroadcast"
 !define UNINSTALLER      "$INSTDIR\vncbunst.exe"
+outFile "..\dist\${PRODNAME}Installer.exe"
 
 !define SVC_WRAPPER_NAME "ServiceEx"
 !define SVC_WRAPPER_FILE "$INSTDIR\${SVC_WRAPPER_NAME}.exe"
 !define SVC_INI          "$INSTDIR\${SVC_NAME}.ini"
 !define SVC_NAME         "VncListeningViewerService"
 
-!define VNCBRAND         "TightVNC"
 !define VNCVIEWER        "$INSTDIR\vncviewer.exe"
 !define VNCSERVER        "$INSTDIR\WinVNC.exe"
 !define VNCVIEWER_OPTS \
      "-listen -viewonly -fullscreen -notoolbar -shared -restricted -fitwindow"
 
-!define BROADCAST        "broadcast.bat"
-!define BROADCAST_SHORTCUT "$SMPROGRAMS\TightVNC\Administration\Broadcast.lnk"
-
-!define ADDREMOVEPROGS "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODNAME}"
+!define BROADCAST_SHORTCUT "$SMPROGRAMS\$VncType\${PRODNAME}.lnk"
+	 
+!define UNINSTALL      "${ADDREMOVEPROGS}\${PRODNAME}"
 
 !define MSG_INSTALL  "This will install ${PRODNAME}"
-!define ERRMSG_NOVNC "Cannot find ${VNCBRAND}.  You must have ${VNCBRAND} installed."
+!define ERRMSG_NOVNC "Cannot find any installed VNC.  You must have VNC installed."
 !define ERRMSG_NOTADMIN "You are a member of $0.  You must have administrator rights to install this program."
 
 !define FIREWALL "netsh firewall add allowedprogram "
+
+Var VncType
 
 !macro regService action
    nsExec::Exec '"${SVC_WRAPPER_FILE}" ${action} "${SVC_NAME}"'
 !macroend
 
-
-outFile "${PRODNAME}.exe"
-installDir $PROGRAMFILES\${VNCBRAND}
-
-section "admincheck"  
+section "adminCheck"  
     # call userInfo plugin to get user info.
     # The plugin puts the result in the stack
     userInfo::getAccountType
@@ -47,57 +49,47 @@ section "admincheck"
     IsAdmin:  
 sectionEnd
 
-section
+section "start"
+   SetShellVarContext all
    messageBox MB_OK "${MSG_INSTALL}"
+sectionEnd
 
+section "vncDetect"
    # check whether vnc is even installed...
    #
-   IfFileExists ${VNCVIEWER} 0 NoFile
-      Goto IfEnd
-   NoFile:
+   !insertmacro detectVnc $VncType $INSTDIR
+   IfFileExists $INSTDIR HasFile 0
       messageBox MB_OK|MB_ICONEXCLAMATION "${ERRMSG_NOVNC}"
       Quit
-   IfEnd:
+   HasFile:
+   
+   WriteRegStr HKLM "SOFTWARE\ORL\WinVNC3" "VncFlavor" "$VncType"   
+sectionEnd
 
+section "setupUninstall"
    # create the uninstaller
    WriteUninstaller ${UNINSTALLER}
-
+   
    # set up add/remove programs
-   WriteRegStr HKLM ${ADDREMOVEPROGS} "DisplayName" "${PRODNAME}"
-   WriteRegStr HKLM ${ADDREMOVEPROGS} "UninstallString" "${UNINSTALLER}"
-   WriteRegStr HKLM ${ADDREMOVEPROGS} "InstallLocation" "$INSTDIR"
+   WriteRegStr HKLM ${UNINSTALL} "DisplayName" "${PRODNAME}"
+   WriteRegStr HKLM ${UNINSTALL} "UninstallString" "${UNINSTALLER}"
+   WriteRegStr HKLM ${UNINSTALL} ${ADDREMPROGS_LOCATION} "$INSTDIR"
 sectionEnd
 
 section "setupVncServer"
-
    # disable shutdown for vnc server
-
-   WriteRegDWORD HKLM \
-      "SOFTWARE\ORL\WinVNC3\Default" \
-      "AllowShutdown" 0x0
+   WriteRegDWORD HKLM "${VNC_SETTINGS}\Default" "AllowShutdown" 0x0
 
    # disable property editing for server
-
-   #WriteRegDWORD HKLM \
-      "SOFTWARE\ORL\WinVNC3\Default" \
-      "AllowProperties" 0x0
-sectionEnd
-
-section "firewall"
-   # poke a hole in xp's firewall
-
-   nsExec::Exec '${FIREWALL} "${VNCVIEWER}" VncViewer ENABLE'
-   nsExec::Exec '${FIREWALL} "${VNCSERVER}" VncServer ENABLE'
+   #WriteRegDWORD HKLM "${VNC_SETTINGS}\Default" "AllowProperties" 0x0
 sectionEnd
 
 section "setupVncViewerService"
-   SetShellVarContext all
-
    # make sure we have the full-screen
    # prompt turned off for the viewer
    #
    WriteRegDWORD HKU \
-      ".DEFAULT\Software\ORL\VNCviewer\settings" \
+      ".DEFAULT\${VNC_VIEWER_SETTINGS}" \
       "SkipFullScreenPrompt" 0x1
 
    # copy the service wrapper
@@ -108,11 +100,8 @@ section "setupVncViewerService"
       !insertmacro regService remove
    NoFile:
       SetOutPath $INSTDIR
-      File "${SVC_WRAPPER_NAME}.exe"
-
-   File "${BROADCAST}"
-   CreateShortcut ${BROADCAST_SHORTCUT} $INSTDIR\${BROADCAST}
-
+      File "..\lib\ServiceEx\${SVC_WRAPPER_NAME}.exe"
+   
    # set up the service wrapper ini
    #
    WriteINIStr "${SVC_INI}" "${SVC_WRAPPER_NAME}" "ServiceExeFullPath" "${VNCVIEWER}"
@@ -123,9 +112,22 @@ sectionEnd
 
 # register/start the vncviewer service
 #
-section
+section "vncviewerservice"
    !insertmacro regService install
 sectionEnd
+
+section "firewall"
+   # poke a hole in xp's firewall
+   nsExec::Exec '${FIREWALL} "${VNCVIEWER}" VncViewer ENABLE'
+   nsExec::Exec '${FIREWALL} "${VNCSERVER}" VncServer ENABLE'
+sectionEnd
+
+section "broadcaster"
+   File ..\dist\${PRODNAME}.exe
+   CreateShortcut ${BROADCAST_SHORTCUT} $INSTDIR\${PRODNAME}
+sectionEnd
+
+
 
 
 # Uninstallation
@@ -133,11 +135,16 @@ sectionEnd
 section "uninstall"   
    SetShellVarContext all
 
+   # get the vnc type that we're using and remove the key
+   ReadRegStr $VncType HKLM ${VNC_SETTINGS} "VncFlavor" 
+   DeleteRegValue HKLM ${VNC_SETTINGS} "VncFlavor" 
+   
    !insertmacro regService remove
-   Delete $INSTDIR\${BROADCAST}
    Delete ${BROADCAST_SHORTCUT}
+   Delete $INSTDIR\${PRODNAME}.exe
    Delete ${SVC_WRAPPER_FILE}
    Delete ${SVC_INI}
    Delete ${UNINSTALLER}
-   DeleteRegKey HKLM ${ADDREMOVEPROGS}
+   DeleteRegKey HKLM ${UNINSTALL}
 sectionEnd
+
