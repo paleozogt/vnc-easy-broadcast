@@ -15,6 +15,13 @@
    <import file="${build-lib}/launch4j-task.xml"/>
    <import file="${build-lib}/nsisant-task.xml"/>
    
+   <target name="help">
+      <echo>
+	  dist     - build the jar, windows exe and windows launcher  
+	  clean    - clean up
+	  </echo>
+   </target>
+   
    <target name="init">
       <!-- Create the time stamp -->
       <tstamp/>
@@ -47,20 +54,25 @@
       </javac>
    </target>
 
-   <target name="dist" depends="compile" description="generate the distribution" >
+   <target name="dist" depends="jar,installer" description="generate the distribution" >
+   </target>
+
+   <target name="jar" depends="compile">
       <!-- Create the distribution directory -->
-      <mkdir dir="${dist}"/>
-	  
+      <mkdir dir="${dist}"/>   
+   
       <!-- Put everything in ${build} into the jar file -->
       <jar jarfile="${dist}/VncEasyBroadcast.jar" basedir="${build}" manifest="manifest.mf"/>
-      
-	  <!-- build windows exe-->
+   </target>
+   
+   <target name="installer" depends="jar">
+   	  <!-- build windows exe-->
       <launch4j configFile="./lancher-config.xml"/>
 	  
 	  <!-- build the installer -->
-	  <nsis script="${install-src}\VncEasyBroadcast.nsi" verbosity="2" path="${nsis.dir}"/>
+	  <nsis script="${install-src}\VncEasyBroadcast.nsi" verbosity="2" path="${nsis.dir}"/>	  
    </target>
-
+   
    <target name="clean" description="clean up" >
       <!-- Delete the ${build} and ${dist} directory trees -->
       <delete dir="${build}"/>
