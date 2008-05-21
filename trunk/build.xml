@@ -47,7 +47,7 @@
    
    <target name="compile" depends="preplibs" description="compile the source " >
       <!-- Compile the java code from ${src} into ${build} -->
-      <javac srcdir="${src}" destdir="${build}">
+      <javac srcdir="${src}" destdir="${build}" source= "1.5" target="1.5">
          <classpath>
             <pathelement location="lib"/>
          </classpath>
