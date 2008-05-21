@@ -61,7 +61,7 @@ section "vncDetect"
    # check whether vnc is even installed...
    #
    !insertmacro detectVnc $VncType $INSTDIR
-messageBox MB_OK|MB_ICONEXCLAMATION "vnctype= $VncType location=$INSTDIR"
+	#messageBox MB_OK|MB_ICONEXCLAMATION "vnctype= $VncType location=$INSTDIR"
    IfFileExists $INSTDIR HasFile 0
       messageBox MB_OK|MB_ICONEXCLAMATION "${ERRMSG_NOVNC}"
       Quit
@@ -137,6 +137,10 @@ sectionEnd
 
 section "broadcaster"
    File ..\dist\${PRODNAME}.exe
+   
+   # TODO: Figure out how to find the vnc shortcut folder if
+   # the user put vnc in some non-standard shortcut place.
+   CreateDirectory "$SMPROGRAMS\$VncType"
    CreateShortcut ${BROADCAST_SHORTCUT} $INSTDIR\${PRODNAME}
 sectionEnd
 
@@ -154,6 +158,7 @@ section "uninstall"
    
    !insertmacro regService remove
    Delete ${BROADCAST_SHORTCUT}
+   RMDir "$SMPROGRAMS\$VncType"			# note that this will only delete if the dir is empty
    Delete $INSTDIR\${PRODNAME}.exe
    Delete ${SVC_WRAPPER_FILE}
    Delete ${SVC_INI}
