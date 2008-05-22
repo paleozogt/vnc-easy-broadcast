@@ -63,6 +63,13 @@ sectionEnd
 section "start"
    SetShellVarContext all
    messageBox MB_OK "${MSG_INSTALL}"
+   
+   # if we're already installed, then silently uninstall the current version before continuing
+   ReadRegStr $0 HKLM ${UNINSTALL} "UninstallString"
+   ReadRegStr $1 HKLM ${UNINSTALL} "InstallLocation"
+   StrCmp $0 "" Done 0
+   ExecWait '"$0" /S _?=$1'
+Done:
 sectionEnd
 
 section "vncDetect"
