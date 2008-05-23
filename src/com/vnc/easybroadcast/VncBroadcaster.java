@@ -5,8 +5,7 @@ import java.io.IOException;
 import java.util.Formatter;
 import java.util.Iterator;
 
-import javax.swing.BoundedRangeModel;
-
+import com.util.gui.ProgressModel;
 import com.vnc.VncViewerInfo;
 import com.vnc.VncViewersList;
 
@@ -17,24 +16,27 @@ public class VncBroadcaster {
 	private static int waittime= 3500;
 	private static Runtime runtime= Runtime.getRuntime();
 
-	public static void broadcast(VncViewersList clients, BoundedRangeModel prog) {
+	public static void broadcast(VncViewersList clients, ProgressModel prog) throws IOException {
 		Iterator<VncViewerInfo> it= clients.iterator();
-		while (it.hasNext()) {
+		while (it.hasNext()) {					
 			VncViewerInfo client= it.next();
-			broadcast(client.getHost());
-			if (prog != null) prog.setValue(prog.getValue()+1);
+			String host= client.getHost();
+
+			if (prog != null)
+				prog.setMessage(host);
+			
+			broadcast(host);
+			
+			if (prog != null)
+				prog.setValue(prog.getValue()+1);
 		}
 	}
 	
-	synchronized public static void broadcast(String host) {
-		try {
-			String cmd= getBroadcastCmd(host);
-			System.out.println(cmd);
-			runtime.exec(cmd);
-			sleep(waittime);
-		} catch (IOException e) {
-			System.out.println(e);
-		}
+	synchronized public static void broadcast(String host) throws IOException {
+		String cmd= getBroadcastCmd(host);
+		System.out.println(cmd);
+		runtime.exec(cmd);
+		sleep(waittime);
 	}
 	
 	static String getBroadcastCmd(String host) {
