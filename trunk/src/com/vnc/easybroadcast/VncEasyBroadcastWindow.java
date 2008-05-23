@@ -13,11 +13,13 @@ import javax.swing.BoundedRangeModel;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JWindow;
 import javax.swing.SwingUtilities;
 
+import com.util.gui.ProgressBarDialog;
 import com.vnc.VncViewerInfo;
 import com.vnc.VncViewerListEditor;
 import com.vnc.VncViewersList;
@@ -89,37 +91,39 @@ public class VncEasyBroadcastWindow extends JFrame {
 		System.out.println("loaded " + clients.size());
 
 		// set up progress bar window
-		final JDialog progwin= new JDialog();
-		final JProgressBar bar= new JProgressBar(0, clients.size());
-		progwin.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
-		progwin.setPreferredSize(new Dimension(300, 75));
-		progwin.setTitle(PROG_BROADCAST);
-		progwin.add(bar);
-		progwin.pack();
-		progwin.setLocationRelativeTo(this);
-		progwin.setModal(true);
+		final ProgressBarDialog progDlg= 
+			new ProgressBarDialog(this, PROG_BROADCAST, 0, clients.size());
+		progDlg.setModal(true);
 
 		// broadcast to everybody, but do it 
 		// on the background thread so that we
 		// can show a progress dialog
 		new Thread() {
-			public void run() { 
+			public void run() {
 				try {
-					VncBroadcaster.broadcast(clients, bar.getModel());					
-				} catch (Exception e) {
+					VncBroadcaster.broadcast(clients, progDlg.getModel());					
+				} catch (final Exception e) {
 					System.out.println(e);
+
+					SwingUtilities.invokeLater(new Runnable() {
+						public void run() {
+							JOptionPane.showMessageDialog(
+									VncEasyBroadcastWindow.this, 
+									e.toString());
+						}
+					});				
 				}
 
 				// close the progress dialog on the swing thread
 				SwingUtilities.invokeLater(new Runnable() {
 					public void run() {
-						progwin.setVisible(false);
+						progDlg.setVisible(false);
 					}
-				});					
+				});
 			}
 		}.start();
 
-		progwin.setVisible(true);
+		progDlg.setVisible(true);
 		this.quit();
 	}
 
